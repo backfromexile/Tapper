@@ -1,4 +1,5 @@
 using System;
+using Microsoft.CodeAnalysis;
 using Tapper.TypeTranslators;
 
 namespace Tapper;
@@ -12,7 +13,7 @@ public sealed class TypeTranslatorProviderBuilder
         _enumStyle = enumStyle;
     }
 
-    public ITypeTranslatorProvider Build()
+    public ITypeTranslatorProvider Build(Compilation compilation)
     {
         var messageTypeTranslator = new DefaultMessageTypeTranslator();
 
@@ -24,6 +25,8 @@ public sealed class TypeTranslatorProviderBuilder
             _ => throw new InvalidOperationException()
         };
 
-        return new DefaultTypeTranslatorProvider(messageTypeTranslator, enumTypeTranslator);
+        var customTranslators = compilation.GetCustomTypeTranslators();
+
+        return new DefaultTypeTranslatorProvider(messageTypeTranslator, enumTypeTranslator, customTranslators);
     }
 }

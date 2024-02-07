@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 
 namespace Tapper;
@@ -91,5 +95,55 @@ public static partial class RoslynExtensions
             .ToArray();
 
         return TargetTypes;
+    }
+
+    private static IReadOnlyDictionary<INamedTypeSymbol, ITypeTranslator>? CustomTypeTranslators;
+    public static IReadOnlyDictionary<INamedTypeSymbol, ITypeTranslator> GetCustomTypeTranslators(this Compilation compilation)
+    {
+        if (CustomTypeTranslators is not null)
+        {
+            return CustomTypeTranslators;
+        }
+
+        var assembly = Compile(compilation);
+
+        CustomTypeTranslators = assembly.GetTypes()
+            .Select(type => (type, attribute: type.GetCustomAttribute<TypeTranslatorAttribute>()))
+            .Where(tuple => tuple.attribute is not null)
+            .SelectMany(tuple =>
+            {
+                var targetTypes = Array.ConvertAll(
+                    tuple.attribute!.Types,
+                    type => compilation.GetTypeByMetadataName(type.FullName ?? throw new InvalidOperationException("Missing type name"))
+                        ?? throw new InvalidOperationException($"Failed to load type \"{type.FullName}\""));
+
+                var translator = (ITypeTranslator?)Activator.CreateInstance(tuple.type)
+                    ?? throw new InvalidOperationException($"Failed to create an instance of \"{tuple.type.FullName}\"");
+
+                return targetTypes.Select(targetType => (targetType, translator));
+            })
+            .ToDictionary<(INamedTypeSymbol targetType, ITypeTranslator translator), INamedTypeSymbol, ITypeTranslator>(
+                tuple => tuple.targetType,
+                tuple => tuple.translator,
+                SymbolEqualityComparer.Default);
+
+        return CustomTypeTranslators;
+    }
+
+    private static Assembly Compile(Compilation compilation)
+    {
+        using var memoryStream = new MemoryStream();
+
+        var compilationResult = compilation.Emit(memoryStream);
+        if (!compilationResult.Success)
+        {
+            throw new InvalidOperationException($"Compilation failed with {compilationResult.Diagnostics.Length} errors");
+        }
+
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        var assembly = AssemblyLoadContext.Default.LoadFromStream(memoryStream);
+
+        return assembly;
     }
 }

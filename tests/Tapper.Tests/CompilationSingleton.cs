@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Xunit;
@@ -14,11 +17,7 @@ public class CompilationSingleton
 
     static CompilationSingleton()
     {
-        var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp10);
-
-        var attributeSyntaxTree = CSharpSyntaxTree.ParseText(
-            File.ReadAllText("../../../../../src/Tapper.Attributes/TranspilationSourceAttribute.cs"),
-            options);
+        var options = CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.CSharp11);
 
         var primitiveSyntax = CSharpSyntaxTree.ParseText(
             File.ReadAllText("../../../../Tapper.Test.SourceTypes/PrimitiveClasses.cs"),
@@ -68,6 +67,10 @@ public class CompilationSingleton
             File.ReadAllText("../../../../Tapper.Test.SourceTypes/GenericClasses.cs"),
             options);
 
+        var customTypeTranslatorsSyntax = CSharpSyntaxTree.ParseText(
+            File.ReadAllText("../../../../Tapper.Test.SourceTypes/CustomTypeTranslators.cs"),
+            options);
+
         var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             .WithNullableContextOptions(NullableContextOptions.Enable);
 
@@ -78,13 +81,19 @@ public class CompilationSingleton
             MetadataReference.CreateFromFile(typeof(Uri).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(LinkedList<>).Assembly.Location),
             MetadataReference.CreateFromFile(typeof(JsonPropertyNameAttribute).Assembly.Location),
+
+            MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location), // System.Linq.dll
+            MetadataReference.CreateFromFile(Assembly.Load("netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51").Location), // netstandard 2.0
+            MetadataReference.CreateFromFile(Assembly.Load("System.Runtime").Location), // System.Runtime.dll
+            MetadataReference.CreateFromFile(typeof(ITypeMapper).Assembly.Location), // Tapper.dll
+            MetadataReference.CreateFromFile(typeof(TypeTranslatorAttribute).Assembly.Location), // Tapper.Attributes.dll
+            MetadataReference.CreateFromFile(typeof(ITypeSymbol).Assembly.Location), // Microsoft.CodeAnalysis.dll
         };
 
         var compilation = CSharpCompilation.Create(
             assemblyName: null,
             syntaxTrees: new[]
             {
-                attributeSyntaxTree,
                 primitiveSyntax,
                 collectionSyntax,
                 dictionarySyntax,
@@ -97,6 +106,7 @@ public class CompilationSingleton
                 partialClassSyntax,
                 nestedTypeSyntax,
                 genericClassSyntax,
+                customTypeTranslatorsSyntax,
             },
             references: references,
             options: compilationOptions);

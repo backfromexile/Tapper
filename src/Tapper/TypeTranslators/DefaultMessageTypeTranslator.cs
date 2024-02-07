@@ -7,6 +7,7 @@ using Tapper.TypeMappers;
 
 namespace Tapper.TypeTranslators;
 
+
 // The name "Message" is derived from the protobuf message.
 // In other words, user defined type.
 internal class DefaultMessageTypeTranslator : ITypeTranslator
@@ -22,7 +23,7 @@ internal class DefaultMessageTypeTranslator : ITypeTranslator
 
 
         codeWriter.Append($"/** Transpiled from {typeSymbol.OriginalDefinition.ToDisplayString()} */{newLineString}");
-        codeWriter.Append($"export type {MessageTypeTranslatorHelper.GetGenericTypeName(typeSymbol)} = {{{newLineString}");
+        codeWriter.Append($"export type {TypeTranslatorHelper.GetGenericTypeName(typeSymbol)} = {{{newLineString}");
 
         foreach (var member in members)
         {
@@ -44,7 +45,7 @@ internal class DefaultMessageTypeTranslator : ITypeTranslator
 
         if (MessageTypeTranslatorHelper.IsSourceType(typeSymbol.BaseType, options))
         {
-            codeWriter.Append($" & {MessageTypeTranslatorHelper.GetConcreteTypeName(typeSymbol.BaseType, options)};");
+            codeWriter.Append($" & {TypeTranslatorHelper.GetConcreteTypeName(typeSymbol.BaseType, options)};");
         }
 
         codeWriter.Append(newLineString);
@@ -53,33 +54,6 @@ internal class DefaultMessageTypeTranslator : ITypeTranslator
 
 file static class MessageTypeTranslatorHelper
 {
-    public static string GetConcreteTypeName(INamedTypeSymbol typeSymbol, ITranspilationOptions options)
-    {
-        var genericTypeArguments = "";
-        if (typeSymbol.IsGenericType)
-        {
-            var mappedGenericTypeArguments = typeSymbol.TypeArguments.Select(typeArg =>
-            {
-                var mapper = options.TypeMapperProvider.GetTypeMapper(typeArg);
-                return mapper.MapTo(typeArg, options);
-            });
-            genericTypeArguments = $"<{string.Join(", ", mappedGenericTypeArguments)}>";
-        }
-
-        return $"{typeSymbol.Name}{genericTypeArguments}";
-    }
-
-    public static string GetGenericTypeName(INamedTypeSymbol typeSymbol)
-    {
-        var genericTypeParameters = "";
-        if (typeSymbol.IsGenericType)
-        {
-            genericTypeParameters = $"<{string.Join(", ", typeSymbol.TypeParameters.Select(param => param.Name))}>";
-        }
-
-        return $"{typeSymbol.Name}{genericTypeParameters}";
-    }
-
     public static (ITypeSymbol TypeSymbol, bool IsNullable) GetMemberTypeSymbol(ISymbol symbol, ITranspilationOptions options)
     {
         if (symbol is IPropertySymbol propertySymbol)

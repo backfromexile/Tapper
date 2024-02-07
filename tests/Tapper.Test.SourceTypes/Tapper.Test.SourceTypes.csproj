@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Tapper.Attributes\Tapper.Attributes.csproj" />
+        <ProjectReference Include="..\..\src\Tapper\Tapper.csproj" />
     </ItemGroup>
 
     <ItemGroup>
