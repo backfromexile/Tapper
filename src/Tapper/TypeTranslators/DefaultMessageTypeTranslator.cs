@@ -1,9 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CodeAnalysis;
-using Tapper.TypeMappers;
 
 namespace Tapper.TypeTranslators;
 
@@ -13,39 +11,24 @@ internal class DefaultMessageTypeTranslator : ITypeTranslator
 {
     public void Translate(ref CodeWriter codeWriter, INamedTypeSymbol typeSymbol, ITranspilationOptions options)
     {
-        var indent = options.GetIndentString();
         var newLineString = options.NewLine.ToNewLineString();
 
-        var members = typeSymbol.GetPublicFieldsAndProperties()
-            .IgnoreStatic()
-            .ToArray();
-
-
         codeWriter.Append($"/** Transpiled from {typeSymbol.OriginalDefinition.ToDisplayString()} */{newLineString}");
-        codeWriter.Append($"export type {MessageTypeTranslatorHelper.GetGenericTypeName(typeSymbol)} = {{{newLineString}");
+        codeWriter.Append($"export type {TypeTranslatorHelper.GetGenericTypeName(typeSymbol)} = ");
 
-        foreach (var member in members)
+        var typeConverter = options.TypeConverterProvider.GetTypeConverter(typeSymbol);
+        typeConverter.Convert(ref codeWriter, typeSymbol, options);
+
+        if (typeSymbol.BaseType is not null)
         {
-            var (memberTypeSymbol, isNullable) = MessageTypeTranslatorHelper.GetMemberTypeSymbol(member, options);
-
-            var (isValid, name) = MessageTypeTranslatorHelper.GetMemberName(member, options);
-
-            if (!isValid)
+            if (MessageTypeTranslatorHelper.IsSourceType(typeSymbol.BaseType, options)
+            || options.TypeConverterProvider.TryGetCustomTypeConverter(typeSymbol.BaseType, out _))
             {
-                continue;
+                codeWriter.Append($" & {TypeTranslatorHelper.GetConcreteTypeName(typeSymbol.BaseType, options)}");
             }
-
-            // Add jsdoc comment
-            codeWriter.Append($"{indent}/** Transpiled from {memberTypeSymbol.ToDisplayString()} */{newLineString}");
-            codeWriter.Append($"{indent}{name}{(isNullable ? "?" : string.Empty)}: {TypeMapper.MapTo(memberTypeSymbol, options)};{newLineString}");
         }
 
-        codeWriter.Append('}');
-
-        if (MessageTypeTranslatorHelper.IsSourceType(typeSymbol.BaseType, options))
-        {
-            codeWriter.Append($" & {MessageTypeTranslatorHelper.GetConcreteTypeName(typeSymbol.BaseType, options)};");
-        }
+        codeWriter.Append(';');
 
         codeWriter.Append(newLineString);
     }
@@ -53,82 +36,9 @@ internal class DefaultMessageTypeTranslator : ITypeTranslator
 
 file static class MessageTypeTranslatorHelper
 {
-    public static string GetConcreteTypeName(INamedTypeSymbol typeSymbol, ITranspilationOptions options)
+    public static bool IsSourceType([NotNullWhen(true)] INamedTypeSymbol typeSymbol, ITranspilationOptions options)
     {
-        var genericTypeArguments = "";
-        if (typeSymbol.IsGenericType)
-        {
-            var mappedGenericTypeArguments = typeSymbol.TypeArguments.Select(typeArg =>
-            {
-                var mapper = options.TypeMapperProvider.GetTypeMapper(typeArg);
-                return mapper.MapTo(typeArg, options);
-            });
-            genericTypeArguments = $"<{string.Join(", ", mappedGenericTypeArguments)}>";
-        }
-
-        return $"{typeSymbol.Name}{genericTypeArguments}";
-    }
-
-    public static string GetGenericTypeName(INamedTypeSymbol typeSymbol)
-    {
-        var genericTypeParameters = "";
-        if (typeSymbol.IsGenericType)
-        {
-            genericTypeParameters = $"<{string.Join(", ", typeSymbol.TypeParameters.Select(param => param.Name))}>";
-        }
-
-        return $"{typeSymbol.Name}{genericTypeParameters}";
-    }
-
-    public static (ITypeSymbol TypeSymbol, bool IsNullable) GetMemberTypeSymbol(ISymbol symbol, ITranspilationOptions options)
-    {
-        if (symbol is IPropertySymbol propertySymbol)
-        {
-            var typeSymbol = propertySymbol.Type;
-
-            if (typeSymbol.IsValueType)
-            {
-                if (typeSymbol is INamedTypeSymbol namedTypeSymbol)
-                {
-                    if (namedTypeSymbol.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T)
-                    {
-                        return (namedTypeSymbol.TypeArguments[0], true);
-                    }
-
-                    return (typeSymbol, false);
-                }
-            }
-
-            var isNullable = propertySymbol.NullableAnnotation is not NullableAnnotation.NotAnnotated;
-            return (typeSymbol, isNullable);
-        }
-        else if (symbol is IFieldSymbol fieldSymbol)
-        {
-            var typeSymbol = fieldSymbol.Type;
-
-            if (typeSymbol.IsValueType)
-            {
-                if (typeSymbol is INamedTypeSymbol namedTypeSymbol)
-                {
-                    if (namedTypeSymbol.ConstructedFrom.SpecialType == SpecialType.System_Nullable_T)
-                    {
-                        return (namedTypeSymbol.TypeArguments[0], true);
-                    }
-
-                    return (typeSymbol, false);
-                }
-            }
-
-            var isNullable = fieldSymbol.NullableAnnotation is not NullableAnnotation.NotAnnotated;
-            return (typeSymbol, isNullable);
-        }
-
-        throw new UnreachableException($"{nameof(symbol)} must be IPropertySymbol or IFieldSymbol");
-    }
-
-    public static bool IsSourceType([NotNullWhen(true)] INamedTypeSymbol? typeSymbol, ITranspilationOptions options)
-    {
-        if (typeSymbol is not null && typeSymbol.SpecialType != SpecialType.System_Object)
+        if (typeSymbol.SpecialType != SpecialType.System_Object)
         {
             if (options.SourceTypes.Contains(typeSymbol.ConstructedFrom, SymbolEqualityComparer.Default))
             {
@@ -137,46 +47,5 @@ file static class MessageTypeTranslatorHelper
         }
 
         return false;
-    }
-
-    public static (bool IsValid, string Name) GetMemberName(ISymbol memberSymbol, ITranspilationOptions options)
-    {
-        if (options.SerializerOption == SerializerOption.Json)
-        {
-            foreach (var attr in memberSymbol.GetAttributes())
-            {
-                if (options.SpecialSymbols.JsonIgnoreAttributes.Any(x => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, x)))
-                {
-                    return (false, string.Empty);
-                }
-
-                if (options.SpecialSymbols.JsonPropertyNameAttributes.Any(x => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, x)))
-                {
-                    var name = attr.ConstructorArguments[0].Value!.ToString()!;
-                    return (true, name);
-                }
-            }
-        }
-        else if (options.SerializerOption == SerializerOption.MessagePack)
-        {
-            foreach (var attr in memberSymbol.GetAttributes())
-            {
-                if (options.SpecialSymbols.MessagePackIgnoreMemberAttributes.Any(x => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, x)))
-                {
-                    return (false, string.Empty);
-                }
-
-                if (options.SpecialSymbols.MessagePackKeyAttributes.Any(x => SymbolEqualityComparer.Default.Equals(attr.AttributeClass, x)))
-                {
-                    if (attr.ConstructorArguments[0].Type?.SpecialType == SpecialType.System_String)
-                    {
-                        var name = attr.ConstructorArguments[0].Value!.ToString()!;
-                        return (true, name);
-                    }
-                }
-            }
-        }
-
-        return (true, options.NamingStyle.Transform(memberSymbol.Name));
     }
 }

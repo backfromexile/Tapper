@@ -50,7 +50,7 @@ export type NastingNamespaceType = {
   Name2?: CustomType3;
   /** Transpiled from System.Collections.Generic.List<Tapper.Test.SourceTypes.Space2.CustomType4> */
   List: CustomType4[];
-}
+};
 ";
 
         _output.WriteLine(code);

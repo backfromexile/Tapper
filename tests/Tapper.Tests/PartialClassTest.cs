@@ -45,7 +45,7 @@ export type PartialClass = {
   value1: number;
   /** Transpiled from int */
   value2: number;
-}
+};
 ";
 
         _output.WriteLine(code);

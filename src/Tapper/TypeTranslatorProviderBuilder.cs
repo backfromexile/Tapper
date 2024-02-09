@@ -1,4 +1,5 @@
 using System;
+using Microsoft.CodeAnalysis;
 using Tapper.TypeTranslators;
 
 namespace Tapper;

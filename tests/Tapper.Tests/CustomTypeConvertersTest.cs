@@ -4,17 +4,17 @@ using Xunit.Abstractions;
 
 namespace Tapper.Tests;
 
-public class InheritanceTests
+public class CustomTypeConvertersTest
 {
     private readonly ITestOutputHelper _output;
 
-    public InheritanceTests(ITestOutputHelper output)
+    public CustomTypeConvertersTest(ITestOutputHelper output)
     {
         _output = output;
     }
 
     [Fact]
-    public void Test0()
+    public void Test_CustomTranslatedType()
     {
         var compilation = CompilationSingleton.Compilation;
 
@@ -24,14 +24,14 @@ public class InheritanceTests
             NamingStyle.None,
             EnumStyle.Value,
             NewLineOption.Lf,
-            2,
+            4,
             false,
             true
         );
 
         var codeGenerator = new TypeScriptCodeGenerator(compilation, options);
 
-        var type = typeof(InheritanceClass0);
+        var type = typeof(CustomConvertedType);
         var typeSymbol = compilation.GetTypeByMetadataName(type.FullName!)!;
 
         var writer = new CodeWriter();
@@ -39,11 +39,8 @@ public class InheritanceTests
         codeGenerator.AddType(typeSymbol, ref writer);
 
         var code = writer.ToString();
-        var gt = @"/** Transpiled from Tapper.Test.SourceTypes.InheritanceClass0 */
-export type InheritanceClass0 = {
-  /** Transpiled from int */
-  Value0: number;
-};
+        var gt = @"/** Transpiled from Tapper.Test.SourceTypes.CustomConvertedType */
+export type CustomConvertedType = { customProperty: any };
 ";
 
         _output.WriteLine(code);
@@ -53,7 +50,7 @@ export type InheritanceClass0 = {
     }
 
     [Fact]
-    public void Test1()
+    public void Test_CustomGenericTranslatedType()
     {
         var compilation = CompilationSingleton.Compilation;
 
@@ -63,14 +60,14 @@ export type InheritanceClass0 = {
             NamingStyle.None,
             EnumStyle.Value,
             NewLineOption.Lf,
-            2,
+            4,
             false,
             true
         );
 
         var codeGenerator = new TypeScriptCodeGenerator(compilation, options);
 
-        var type = typeof(InheritanceClass1);
+        var type = typeof(CustomGenericConvertedType<>);
         var typeSymbol = compilation.GetTypeByMetadataName(type.FullName!)!;
 
         var writer = new CodeWriter();
@@ -78,11 +75,8 @@ export type InheritanceClass0 = {
         codeGenerator.AddType(typeSymbol, ref writer);
 
         var code = writer.ToString();
-        var gt = @"/** Transpiled from Tapper.Test.SourceTypes.InheritanceClass1 */
-export type InheritanceClass1 = {
-  /** Transpiled from string */
-  InheritanceString1: string;
-} & InheritanceClass0;
+        var gt = @"/** Transpiled from Tapper.Test.SourceTypes.CustomGenericConvertedType<T> */
+export type CustomGenericConvertedType<T> = { genericProperty?: T };
 ";
 
         _output.WriteLine(code);
@@ -92,7 +86,7 @@ export type InheritanceClass1 = {
     }
 
     [Fact]
-    public void Test2()
+    public void Test_CustomInheritedTranslatedType()
     {
         var compilation = CompilationSingleton.Compilation;
 
@@ -102,14 +96,14 @@ export type InheritanceClass1 = {
             NamingStyle.None,
             EnumStyle.Value,
             NewLineOption.Lf,
-            2,
+            4,
             false,
             true
         );
 
         var codeGenerator = new TypeScriptCodeGenerator(compilation, options);
 
-        var type = typeof(InheritanceClass2);
+        var type = typeof(CustomInheritedConvertedType);
         var typeSymbol = compilation.GetTypeByMetadataName(type.FullName!)!;
 
         var writer = new CodeWriter();
@@ -117,52 +111,8 @@ export type InheritanceClass1 = {
         codeGenerator.AddType(typeSymbol, ref writer);
 
         var code = writer.ToString();
-        var gt = @"/** Transpiled from Tapper.Test.SourceTypes.InheritanceClass2 */
-export type InheritanceClass2 = {
-  /** Transpiled from string? */
-  InheritanceString2?: string;
-} & InheritanceClass0;
-";
-
-        _output.WriteLine(code);
-        _output.WriteLine(gt);
-
-        Assert.Equal(gt, code, ignoreLineEndingDifferences: true);
-    }
-
-    [Fact]
-    public void Test3()
-    {
-        var compilation = CompilationSingleton.Compilation;
-
-        var options = new TranspilationOptions(
-            compilation,
-            SerializerOption.Json,
-            NamingStyle.None,
-            EnumStyle.Value,
-            NewLineOption.Lf,
-            2,
-            false,
-            true
-        );
-
-        var codeGenerator = new TypeScriptCodeGenerator(compilation, options);
-
-        var type = typeof(Space2.CustomType2);
-        var typeSymbol = compilation.GetTypeByMetadataName(type.FullName!)!;
-
-        var writer = new CodeWriter();
-
-        codeGenerator.AddType(typeSymbol, ref writer);
-
-        var code = writer.ToString();
-        var gt = @"/** Transpiled from Space2.CustomType2 */
-export type CustomType2 = {
-  /** Transpiled from float */
-  Value2: number;
-  /** Transpiled from System.DateTime */
-  DateTime2: (Date | string);
-} & CustomType1;
+        var gt = @"/** Transpiled from Tapper.Test.SourceTypes.CustomInheritedConvertedType */
+export type CustomInheritedConvertedType = { test: string | number } & CustomGenericConvertedType<string>;
 ";
 
         _output.WriteLine(code);

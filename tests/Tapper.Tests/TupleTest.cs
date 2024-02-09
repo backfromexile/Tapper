@@ -43,7 +43,7 @@ public class TupleTest
 export type SimpleTupleClass = {
   /** Transpiled from (int, string) */
   TapluField: [number, string];
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -82,7 +82,7 @@ export type SimpleTupleClass = {
 export type TupleClassIncludeNullable = {
   /** Transpiled from (int?, System.Guid, System.DateTime) */
   TapluField: [(number | undefined), string, (Date | string)];
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -121,7 +121,7 @@ export type TupleClassIncludeNullable = {
 export type TupleClassNullableField = {
   /** Transpiled from (int?, System.Guid, System.DateTime) */
   TapluField?: [(number | undefined), string, (Date | string)];
-}
+};
 ";
         _output.WriteLine(code);
         _output.WriteLine(gt);
@@ -161,7 +161,7 @@ export type TupleClassIncludeCustomType = {
   TapluField?: [(number | undefined), CustomType, (Date | string)];
   /** Transpiled from (int, Tapper.Test.SourceTypes.Tuple.CustomType?, System.DateTime?) */
   TapluPropery: [number, (CustomType | undefined), ((Date | string) | undefined)];
-}
+};
 ";
 
         _output.WriteLine(code);

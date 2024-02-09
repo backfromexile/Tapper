@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 
 namespace Tapper;
@@ -91,5 +95,103 @@ public static partial class RoslynExtensions
             .ToArray();
 
         return TargetTypes;
+    }
+
+    private static IReadOnlyDictionary<INamedTypeSymbol, ITypeConverter>? CustomTypeConverters;
+    public static IReadOnlyDictionary<INamedTypeSymbol, ITypeConverter> GetCustomTypeConverters(this Compilation compilation, bool includeReferencedAssemblies, bool includeDefaultConverters)
+    {
+        if (CustomTypeConverters is not null)
+        {
+            return CustomTypeConverters;
+        }
+
+        var assembly = Compile(compilation);
+
+        var types = CollectTypes(assembly, includeReferencedAssemblies);
+
+        if (includeDefaultConverters)
+        {
+            var tapperAssembly = typeof(DefaultTypeConverter).Assembly;
+            types.AddRange(CollectTypes(tapperAssembly, false));
+        }
+
+        CustomTypeConverters = types
+            .Select(type => (type, attribute: type.GetCustomAttribute<TypeConverterAttribute>()))
+            .Where(tuple => tuple.attribute is not null)
+            .SelectMany(tuple =>
+            {
+                var targetTypes = Array.ConvertAll(
+                    tuple.attribute!.Types,
+                    type => compilation.GetTypeByMetadataName(type.FullName ?? throw new InvalidOperationException("Missing type name"))
+                        ?? throw new InvalidOperationException($"Failed to load type \"{type.FullName}\""));
+
+                var converter = (ITypeConverter?)Activator.CreateInstance(tuple.type)
+                    ?? throw new InvalidOperationException($"Failed to create an instance of \"{tuple.type.FullName}\"");
+
+                return targetTypes.Select(targetType => (targetType, converter));
+            })
+            .ToDictionary<(INamedTypeSymbol targetType, ITypeConverter converter), INamedTypeSymbol, ITypeConverter>(
+                tuple => tuple.targetType,
+                tuple => tuple.converter,
+                SymbolEqualityComparer.Default);
+
+        return CustomTypeConverters;
+    }
+
+    private static List<Type> CollectTypes(Assembly rootAssembly, bool includeReferencedAssemblies)
+    {
+        if (!includeReferencedAssemblies)
+        {
+            return rootAssembly.GetTypes().ToList();
+        }
+
+        var collectedTypes = new List<Type>();
+
+        var visited = new HashSet<AssemblyName>();
+        var queue = new Queue<Assembly>();
+        queue.Enqueue(rootAssembly);
+
+        while (queue.TryDequeue(out var assembly))
+        {
+            visited.Add(assembly.GetName());
+
+            var types = assembly.GetTypes();
+            collectedTypes.AddRange(types);
+
+            var referencedAssemblyNames = assembly.GetReferencedAssemblies();
+            foreach (var referencedAssemblyName in referencedAssemblyNames)
+            {
+                if (!visited.Contains(referencedAssemblyName))
+                {
+                    var referencedAssembly = Assembly.Load(referencedAssemblyName);
+                    queue.Enqueue(referencedAssembly);
+                }
+            }
+        }
+
+        return collectedTypes;
+    }
+
+    private static Assembly? CompiledAssembly;
+    private static Assembly Compile(Compilation compilation)
+    {
+        if (CompiledAssembly is not null)
+        {
+            return CompiledAssembly;
+        }
+
+        using var memoryStream = new MemoryStream();
+
+        var compilationResult = compilation.Emit(memoryStream);
+        if (!compilationResult.Success)
+        {
+            throw new InvalidOperationException($"Compilation failed with {compilationResult.Diagnostics.Length} errors");
+        }
+
+        memoryStream.Seek(0, SeekOrigin.Begin);
+
+        CompiledAssembly = AssemblyLoadContext.Default.LoadFromStream(memoryStream);
+
+        return CompiledAssembly;
     }
 }

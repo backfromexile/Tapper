@@ -6,6 +6,7 @@ namespace Tapper;
 public class TranspilationOptions : ITranspilationOptions
 {
     public ITypeMapperProvider TypeMapperProvider { get; }
+    public ITypeConverterProvider TypeConverterProvider { get; }
 
     public SpecialSymbols SpecialSymbols { get; }
 
@@ -25,6 +26,7 @@ public class TranspilationOptions : ITranspilationOptions
 
     public bool EnableAttributeReference { get; }
 
+
     public TranspilationOptions(
         Compilation compilation,
         SerializerOption serializerOption,
@@ -37,6 +39,7 @@ public class TranspilationOptions : ITranspilationOptions
         : this(
               compilation,
               new DefaultTypeMapperProvider(compilation, referencedAssembliesTranspilation),
+              new DefaultTypeConverterProvider(compilation.GetCustomTypeConverters(referencedAssembliesTranspilation, includeDefaultConverters: true)),
               serializerOption,
               namingStyle,
               enumStyle,
@@ -50,6 +53,7 @@ public class TranspilationOptions : ITranspilationOptions
     public TranspilationOptions(
         Compilation compilation,
         ITypeMapperProvider typeMapperProvider,
+        ITypeConverterProvider typeConverterProvider,
         SerializerOption serializerOption,
         NamingStyle namingStyle,
         EnumStyle enumStyle,
@@ -59,6 +63,7 @@ public class TranspilationOptions : ITranspilationOptions
         bool enableAttributeReference)
     {
         TypeMapperProvider = typeMapperProvider;
+        TypeConverterProvider = typeConverterProvider;
         SpecialSymbols = new SpecialSymbols(compilation);
         SourceTypes = compilation.GetSourceTypes(referencedAssembliesTranspilation);
         SerializerOption = serializerOption;

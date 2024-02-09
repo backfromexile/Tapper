@@ -45,7 +45,7 @@ public class NestedTypeTest
 export type NestedClassParent = {
     /** Transpiled from System.Collections.Generic.List<Tapper.Test.SourceTypes.NestedClassParent.NestedClassChild>? */
     children?: NestedClassChild[];
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -86,7 +86,7 @@ export type NestedClassChild = {
     message: string;
     /** Transpiled from int */
     value: number;
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -125,7 +125,7 @@ export type NestedClassChild = {
 export type NestedRecordParent = {
     /** Transpiled from System.Collections.Generic.List<Tapper.Test.SourceTypes.NestedRecordParent.NestedRecordChild>? */
     children?: NestedRecordChild[];
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -166,7 +166,7 @@ export type NestedRecordChild = {
     message: string;
     /** Transpiled from int */
     value: number;
-}
+};
 ";
 
         _output.WriteLine(code);

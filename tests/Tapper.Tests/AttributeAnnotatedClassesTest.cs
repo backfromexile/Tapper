@@ -134,7 +134,7 @@ public class AttributeAnnotatedClassesTest
 export type AttributeAnnotatedClass3 = {
     /** Transpiled from string */
     Name: string;
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -175,7 +175,7 @@ export type AttributeAnnotatedClass4 = {
     Bar: number;
     /** Transpiled from string */
     Name: string;
-}
+};
 ";
 
         _output.WriteLine(code);

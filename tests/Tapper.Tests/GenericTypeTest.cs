@@ -46,7 +46,7 @@ export type GenericClass1<T> = {
   StringProperty: string;
   /** Transpiled from T */
   GenericProperty: T;
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -90,7 +90,7 @@ export type GenericClass2<T1, T2> = {
   GenericProperty1: T1;
   /** Transpiled from T2 */
   GenericProperty2: T2;
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -136,7 +136,7 @@ export type NestedGenericClass<T1, T2> = {
   GenericClass1Property: GenericClass1<T1>;
   /** Transpiled from Space1.GenericClass2<T1, T2> */
   GenericClass2Property: GenericClass2<T1, T2>;
-}
+};
 ";
 
         _output.WriteLine(code);
@@ -186,7 +186,7 @@ export type DeeplyNestedGenericClass<A, B, C> = {
   GenericClass2Property: GenericClass2<B, C>;
   /** Transpiled from Tapper.Test.SourceTypes.NestedGenericClass<string, B> */
   NestedGenericClassProperty: NestedGenericClass<string, B>;
-}
+};
 ";
 
         _output.WriteLine(code);

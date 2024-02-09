@@ -7,6 +7,7 @@ namespace Tapper;
 public interface ITranspilationOptions
 {
     ITypeMapperProvider TypeMapperProvider { get; }
+    ITypeConverterProvider TypeConverterProvider { get; }
     SpecialSymbols SpecialSymbols { get; }
     IReadOnlyList<INamedTypeSymbol> SourceTypes { get; }
     SerializerOption SerializerOption { get; }

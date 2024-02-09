@@ -66,7 +66,7 @@ public static class CollectionTypeTranspilationAnswer
 export type ClassIncludeCollectionField<#= Format(type.Key) #> = {
   /** Transpiled from <#= _collectionType[type.Key] #> */
   FieldOf<#= Format(type.Key) #>: <#= type.Value #>;
-}
+};
 ";
 <# } #>
 
@@ -75,7 +75,7 @@ export type ClassIncludeCollectionField<#= Format(type.Key) #> = {
 export type ClassIncludeCollectionProperty<#= Format(type.Key) #> = {
   /** Transpiled from <#= _collectionType[type.Key] #> */
   PropertyOf<#= Format(type.Key) #>: <#= type.Value #>;
-}
+};
 ";
 <# } #>
     }
