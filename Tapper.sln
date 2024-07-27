@@ -31,11 +31,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tapper.Tests.Analyzer", "te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tapper.Tests.Server", "tests\Tapper.Tests.Server\Tapper.Tests.Server.csproj", "{A6E38AD0-2AFB-48A8-8EF9-FB4F31F33072}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tapper.Tests.AsmReference", "tests\Tapper.Tests.AsmReference\Tapper.Tests.AsmReference.csproj", "{A2AF06B7-DDC3-4B1E-B0DF-0D3B9D9192F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tapper.Tests.AsmReference", "tests\Tapper.Tests.AsmReference\Tapper.Tests.AsmReference.csproj", "{A2AF06B7-DDC3-4B1E-B0DF-0D3B9D9192F2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tapper.Tests.AsmReference.SourceTypes1", "tests\Tapper.Tests.AsmReference.SourceTypes1\Tapper.Tests.AsmReference.SourceTypes1.csproj", "{6C28BF96-223B-4AFF-8A55-A6F9D76109AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tapper.Tests.AsmReference.SourceTypes1", "tests\Tapper.Tests.AsmReference.SourceTypes1\Tapper.Tests.AsmReference.SourceTypes1.csproj", "{6C28BF96-223B-4AFF-8A55-A6F9D76109AB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tapper.Tests.AsmReference.SourceTypes2", "tests\Tapper.Tests.AsmReference.SourceTypes2\Tapper.Tests.AsmReference.SourceTypes2.csproj", "{8FF30757-9E57-4D20-AD71-C5FCDEDE7D18}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tapper.Tests.AsmReference.SourceTypes2", "tests\Tapper.Tests.AsmReference.SourceTypes2\Tapper.Tests.AsmReference.SourceTypes2.csproj", "{8FF30757-9E57-4D20-AD71-C5FCDEDE7D18}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tapper.Core", "Tapper.Core\Tapper.Core.csproj", "{B7C50E2A-D236-43BF-BC0F-22B6B14AABB5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCoreSandbox", "AspNetCoreSandbox\AspNetCoreSandbox.csproj", "{161364DF-4116-45AE-B8DD-DB13E2FBE615}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,6 +103,14 @@ Global
 		{8FF30757-9E57-4D20-AD71-C5FCDEDE7D18}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FF30757-9E57-4D20-AD71-C5FCDEDE7D18}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FF30757-9E57-4D20-AD71-C5FCDEDE7D18}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7C50E2A-D236-43BF-BC0F-22B6B14AABB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7C50E2A-D236-43BF-BC0F-22B6B14AABB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7C50E2A-D236-43BF-BC0F-22B6B14AABB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7C50E2A-D236-43BF-BC0F-22B6B14AABB5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{161364DF-4116-45AE-B8DD-DB13E2FBE615}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{161364DF-4116-45AE-B8DD-DB13E2FBE615}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{161364DF-4116-45AE-B8DD-DB13E2FBE615}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{161364DF-4116-45AE-B8DD-DB13E2FBE615}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -118,6 +130,8 @@ Global
 		{A2AF06B7-DDC3-4B1E-B0DF-0D3B9D9192F2} = {DC7F780E-3C20-4CFA-9CA9-1DB36806958F}
 		{6C28BF96-223B-4AFF-8A55-A6F9D76109AB} = {DC7F780E-3C20-4CFA-9CA9-1DB36806958F}
 		{8FF30757-9E57-4D20-AD71-C5FCDEDE7D18} = {DC7F780E-3C20-4CFA-9CA9-1DB36806958F}
+		{B7C50E2A-D236-43BF-BC0F-22B6B14AABB5} = {5824B27B-4772-4139-AFF3-169FF2C004E3}
+		{161364DF-4116-45AE-B8DD-DB13E2FBE615} = {9CD988FD-DEB5-4902-80F9-65DAAF8C59A0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2BBF417F-E9B4-477F-B9AF-D2016323172E}

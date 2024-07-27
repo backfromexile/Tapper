@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\sandbox\JsonSandbox\JsonSandbox.csproj" />
+    <ProjectReference Include="..\sandbox\MessagePackSandbox\MessagePackSandbox.csproj" />
+    <ProjectReference Include="..\sandbox\SampleTypes\SampleTypes.csproj" />
+    <ProjectReference Include="..\src\Tapper.Attributes\Tapper.Attributes.csproj" />
+    <ProjectReference Include="..\Tapper.Core\Tapper.Core.csproj" />
+  </ItemGroup>
+
+</Project>
