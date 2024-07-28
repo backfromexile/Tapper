@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Tapper.Core.Transpilers;
 
-internal class ObjectTypeTranspiler<T> : ITypeTranspiler<T>
+internal class ObjectTypeTranspiler<T> : ITypeDefinitionTranspiler<T>, ITypeReferenceTranspiler<T>
 {
     private readonly ITypeTranspilerProvider _typeTranspilerProvider;
 
@@ -15,7 +15,7 @@ internal class ObjectTypeTranspiler<T> : ITypeTranspiler<T>
         _typeTranspilerProvider = typeTranspilerProvider;
     }
 
-    public string Transpile()
+    public string TranspileTypeDefinition()
     {
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -26,18 +26,34 @@ internal class ObjectTypeTranspiler<T> : ITypeTranspiler<T>
 
         foreach (var property in properties)
         {
-            var propertyTypeTranspiler = _typeTranspilerProvider.GetType()
-                .GetMethod(nameof(ITypeTranspilerProvider.GetTypeTranspiler))
-                ?.MakeGenericMethod(property.PropertyType)
-                ?? throw new InvalidOperationException();
+            string transpiledPropertyTypeReference = GetTranspiledTypeReference(property.PropertyType);
 
-            //TODO invoke
-
-            builder.AppendLine($"{property.Name}:");
+            builder.AppendLine($"{property.Name}: {transpiledPropertyTypeReference}");
         }
 
         builder.AppendLine("}");
 
         return builder.ToString();
+    }
+
+    private string GetTranspiledTypeReference(Type propertyType)
+    {
+        var propertyTypeTranspiler = _typeTranspilerProvider
+            .GetType()
+            .GetMethod(nameof(ITypeTranspilerProvider.GetTypeReferenceTranspiler))
+            ?.MakeGenericMethod(propertyType)
+            .Invoke(_typeTranspilerProvider, parameters: null)
+            as ITypeReferenceTranspiler;
+
+        if (propertyTypeTranspiler is null)
+            throw new InvalidOperationException();
+
+        var transpiledPropertyTypeReference = propertyTypeTranspiler.TranspileTypeReference();
+        return transpiledPropertyTypeReference;
+    }
+
+    public string TranspileTypeReference()
+    {
+        return typeof(T).Name;
     }
 }

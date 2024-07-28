@@ -18,9 +18,7 @@ internal class TranspilationRunner : ITranspilationRunner
 
     public async Task RunAsync()
     {
-        var types = _typeProvider.GetTypes();
-
-        foreach (var type in types)
+        foreach (var type in _typeProvider.Types)
         {
             var genericMethod = _transpileTypeMethodInfo.MakeGenericMethod(type);
 
@@ -31,8 +29,8 @@ internal class TranspilationRunner : ITranspilationRunner
 
     private async Task TranspileTypeAsync<T>()
     {
-        var typeTranspiler = _typeTranspilerProvider.GetTypeTranspiler<T>();
-        var transpiledCode = typeTranspiler.Transpile();
+        var typeDefTranspiler = _typeTranspilerProvider.GetTypeDefinitionTranspiler<T>();
+        var transpiledCode = typeDefTranspiler.TranspileTypeDefinition();
 
 
     }

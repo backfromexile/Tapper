@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Tapper.Core.Transpilers;
 using Tapper.Core.Transpilers.System;
 
 namespace Tapper.Core;
@@ -32,8 +33,27 @@ public static class ServiceRegistrationExtensions
 
         services.AddDefaultTypeTranspilers();
         services.AddTypeTranspilers(assemblies);
+        services.AddTranspilationRootTranspilers(assemblies);
 
         return services;
+    }
+
+    private static void AddTranspilationRootTranspilers(this IServiceCollection services, IReadOnlyList<Assembly> assemblies)
+    {
+        var transpilationRootTypes = GetTranspilationRootTypes(assemblies);
+
+        services.AddScoped<ITranspilationRootTypesProvider>(serviceProvider => new TranspilationRootTypesProvider(transpilationRootTypes));
+
+        foreach (var transpilationRootType in transpilationRootTypes)
+        {
+            var transpilerImplementationType = typeof(ObjectTypeTranspiler<>).MakeGenericType(transpilationRootType);
+
+            var typeDefTranspilerServiceType = typeof(ITypeDefinitionTranspiler<>).MakeGenericType(transpilationRootType);
+            services.AddScoped(typeDefTranspilerServiceType, transpilerImplementationType);
+
+            var typeRefTranspilerServiceType = typeof(ITypeReferenceTranspiler<>).MakeGenericType(transpilationRootType);
+            services.AddScoped(typeRefTranspilerServiceType, transpilerImplementationType);
+        }
     }
 
     private static void AddTranspilationProviders(this IServiceCollection services, IReadOnlyList<Assembly> assemblies)
@@ -43,8 +63,6 @@ public static class ServiceRegistrationExtensions
         services.AddScoped<ITranspilationRootAssembliesProvider>(
             serviceProvider => ActivatorUtilities.CreateInstance<TranspilationRootAssembliesProvider>(serviceProvider, assemblies)
         );
-
-        services.AddScoped<ITranspilationRootTypesProvider, TranspilationRootTypesProvider>();
     }
 
     public static IServiceCollection AddTypeTranspilers(this IServiceCollection services, IReadOnlyList<Assembly> assemblies)
@@ -59,13 +77,20 @@ public static class ServiceRegistrationExtensions
 
     public static IServiceCollection AddTranspilers(this IServiceCollection services, Assembly assembly)
     {
-        var customTranspilerTypes = GetCustomTypeTranspilers(assembly);
-
-        foreach (var (transpilerType, transpiledSourceType) in customTranspilerTypes)
+        var customTypeDefTranspilerTypes = GetCustomTypeDefinitionTranspilers(assembly);
+        foreach (var (typeDefTranspiler, transpiledSourceType) in customTypeDefTranspilerTypes)
         {
-            var serviceType = typeof(ITypeTranspiler<>).MakeGenericType(transpiledSourceType);
+            var serviceType = typeof(ITypeDefinitionTranspiler<>).MakeGenericType(transpiledSourceType);
 
-            services.AddScoped(serviceType, transpilerType);
+            services.AddScoped(serviceType, typeDefTranspiler);
+        }
+
+        var customTypeRefTranspilerTypes = GetCustomTypeReferenceTranspilers(assembly);
+        foreach (var (typeRefTranspilerType, transpiledSourceType) in customTypeRefTranspilerTypes)
+        {
+            var serviceType = typeof(ITypeReferenceTranspiler<>).MakeGenericType(transpiledSourceType);
+
+            services.AddScoped(serviceType, typeRefTranspilerType);
         }
 
         return services;
@@ -76,7 +101,7 @@ public static class ServiceRegistrationExtensions
         return services.AddTranspilers(_defaultTranspilersAssembly);
     }
 
-    private static IReadOnlyList<(Type transpilerType, Type transpiledSourceType)> GetCustomTypeTranspilers(Assembly assembly)
+    private static IReadOnlyList<(Type typeDefinitionTranspilerType, Type transpiledSourceType)> GetCustomTypeDefinitionTranspilers(Assembly assembly)
     {
         return assembly
             .GetTypes()
@@ -84,10 +109,39 @@ public static class ServiceRegistrationExtensions
             .Select(type => new
             {
                 type,
-                implementedInterfaceTypes = type.GetInterfaceImplementations(typeof(ITypeTranspiler<>)),
+                implementedInterfaceTypes = type.GetInterfaceImplementations(typeof(ITypeDefinitionTranspiler<>)),
             })
             .Where(x => x.implementedInterfaceTypes.Length == 1)
             .Select(x => (x.type, x.implementedInterfaceTypes[0].GetGenericArguments()[0]))
             .ToImmutableList();
+    }
+
+    private static IReadOnlyList<(Type typeReferenceTranspilerType, Type transpiledSourceType)> GetCustomTypeReferenceTranspilers(Assembly assembly)
+    {
+        return assembly
+            .GetTypes()
+            .Where(type => !type.IsAbstract && !type.IsGenericType)
+            .Select(type => new
+            {
+                type,
+                implementedInterfaceTypes = type.GetInterfaceImplementations(typeof(ITypeReferenceTranspiler<>)),
+            })
+            .Where(x => x.implementedInterfaceTypes.Length == 1)
+            .Select(x => (x.type, x.implementedInterfaceTypes[0].GetGenericArguments()[0]))
+            .ToImmutableList();
+    }
+
+    private static IReadOnlyList<Type> GetTranspilationRootTypes(IReadOnlyList<Assembly> assemblies)
+    {
+        return assemblies
+            .SelectMany(assembly => GetTranspilationRootTypes(assembly))
+            .ToImmutableList();
+    }
+
+    private static IEnumerable<Type> GetTranspilationRootTypes(Assembly assembly)
+    {
+        return assembly
+            .GetTypes()
+            .Where(type => type.GetCustomAttribute<TranspilationRootAttribute>() is not null);
     }
 }

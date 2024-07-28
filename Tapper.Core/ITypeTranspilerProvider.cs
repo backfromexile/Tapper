@@ -2,5 +2,6 @@ namespace Tapper.Core;
 
 public interface ITypeTranspilerProvider
 {
-    ITypeTranspiler<T> GetTypeTranspiler<T>();
+    ITypeDefinitionTranspiler<T> GetTypeDefinitionTranspiler<T>();
+    ITypeReferenceTranspiler<T> GetTypeReferenceTranspiler<T>();
 }

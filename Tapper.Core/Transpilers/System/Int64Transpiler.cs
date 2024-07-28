@@ -1,9 +1,9 @@
 namespace Tapper.Core.Transpilers.System;
 
-public class StringTranspiler : ITypeReferenceTranspiler<string>
+public class Int64Transpiler : ITypeReferenceTranspiler<long>
 {
     public string TranspileTypeReference()
     {
-        return "string";
+        return "bigint";
     }
 }

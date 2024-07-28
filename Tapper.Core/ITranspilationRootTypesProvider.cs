@@ -1,6 +1,6 @@
-﻿namespace Tapper.Core;
+namespace Tapper.Core;
 
 internal interface ITranspilationRootTypesProvider
 {
-    IReadOnlyList<Type> GetTypes();
+    IReadOnlyList<Type> Types { get; }
 }

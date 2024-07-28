@@ -26,11 +26,12 @@ public class Program
     }
 }
 
-public class TypeWithBuiltinTypePropertiesTranspiler : ITypeTranspiler<TypeWithBuiltinTypeProperties>
+public class TypeWithBuiltinTypePropertiesTranspiler : ITypeDefinitionTranspiler<TypeWithBuiltinTypeProperties>
 {
-    public string Transpile()
+    public string TranspileTypeDefinition()
     {
         return nameof(TypeWithBuiltinTypeProperties);
+        throw new NotImplementedException();
     }
 }
 

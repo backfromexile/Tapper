@@ -6,17 +6,15 @@ namespace Tapper.Core;
 internal class DefaultTypeTranspilerProvider : ITypeTranspilerProvider
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ITranspilationRootTypesProvider _typesProvider;
 
-    public DefaultTypeTranspilerProvider(IServiceProvider serviceProvider, ITranspilationRootTypesProvider typesProvider)
+    public DefaultTypeTranspilerProvider(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _typesProvider = typesProvider;
     }
 
-    public ITypeTranspiler<T> GetTypeTranspiler<T>()
+    public ITypeDefinitionTranspiler<T> GetTypeDefinitionTranspiler<T>()
     {
-        var registeredTranspiler = _serviceProvider.GetService<ITypeTranspiler<T>>();
+        var registeredTranspiler = _serviceProvider.GetService<ITypeDefinitionTranspiler<T>>();
 
         if (registeredTranspiler is not null)
             return registeredTranspiler;
@@ -25,12 +23,26 @@ internal class DefaultTypeTranspilerProvider : ITypeTranspilerProvider
         if (type.IsEnum)
         {
             var enumTranspiler = typeof(EnumTypeTranspiler<>).MakeGenericType(type);
-            return (ITypeTranspiler<T>)ActivatorUtilities.CreateInstance(_serviceProvider, enumTranspiler);
+            return (ITypeDefinitionTranspiler<T>)ActivatorUtilities.CreateInstance(_serviceProvider, enumTranspiler);
         }
 
-        var objectTranspilerType = typeof(ObjectTypeTranspiler<>).MakeGenericType(type);
-        var transpiler = (ITypeTranspiler<T>)ActivatorUtilities.CreateInstance(_serviceProvider, objectTranspilerType);
+        throw new InvalidOperationException();
+    }
 
-        return transpiler;
+    public ITypeReferenceTranspiler<T> GetTypeReferenceTranspiler<T>()
+    {
+        var registeredTranspiler = _serviceProvider.GetService<ITypeReferenceTranspiler<T>>();
+
+        if (registeredTranspiler is not null)
+            return registeredTranspiler;
+
+        var type = typeof(T);
+        if (type.IsEnum)
+        {
+            var enumTranspiler = typeof(EnumTypeTranspiler<>).MakeGenericType(type);
+            return (ITypeReferenceTranspiler<T>)ActivatorUtilities.CreateInstance(_serviceProvider, enumTranspiler);
+        }
+
+        throw new InvalidOperationException();
     }
 }

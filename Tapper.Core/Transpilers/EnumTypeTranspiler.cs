@@ -1,9 +1,14 @@
 namespace Tapper.Core.Transpilers;
 
-public class EnumTypeTranspiler<T> : ITypeTranspiler<T>
+public class EnumTypeTranspiler<T> : ITypeDefinitionTranspiler<T>, ITypeReferenceTranspiler<T>
     where T : Enum
 {
-    public string Transpile()
+    public string TranspileTypeDefinition()
+    {
+        throw new NotImplementedException();
+    }
+
+    public string TranspileTypeReference()
     {
         throw new NotImplementedException();
     }
